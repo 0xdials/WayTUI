@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <pwd.h>
 
 void setup_seatd(const char *username) {
     printf("Setting up seatd for user: %s\n", username);
@@ -22,8 +23,15 @@ void start_session(const char *username) {
     // Set XDG_SESSION_TYPE to wayland
     setenv("XDG_SESSION_TYPE", "wayland", 1);
 
+    // Get user details
+    struct passwd *pw = getpwnam(username);
+    if (!pw) {
+        fprintf(stderr, "Error: User '%s' not found\n", username);
+        exit(EXIT_FAILURE);
+    }
+
     // Switch to user
-    if (setuid(getpwnam(username)->pw_uid) == -1) {
+    if (setuid(pw->pw_uid) == -1) {
         perror("Failed to switch user");
         exit(EXIT_FAILURE);
     }
