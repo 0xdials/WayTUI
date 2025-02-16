@@ -1,26 +1,37 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include "seatd.h"
 
 void setup_seatd(const char *username) {
     printf("Setting up seatd for user: %s\n", username);
 
-    if (setenv("XDG_SEAT", "seat0", 1) != 0) {
-        perror("Failed to set XDG_SEAT");
+    pid_t pid = fork();
+    if (pid == 0) { // Child process
+        execlp("seatd", "seatd", "-g", "video", "--seat", "seat0", NULL);
+        perror("Failed to start seatd");
+        exit(EXIT_FAILURE);
+    } else if (pid < 0) {
+        perror("Fork failed for seatd");
+        exit(EXIT_FAILURE);
+    }
+}
+
+void start_session(const char *username) {
+    printf("Starting session for user: %s\n", username);
+
+    // Set XDG_SESSION_TYPE to wayland
+    setenv("XDG_SESSION_TYPE", "wayland", 1);
+
+    // Switch to user
+    if (setuid(getpwnam(username)->pw_uid) == -1) {
+        perror("Failed to switch user");
+        exit(EXIT_FAILURE);
     }
 
-    if (setenv("XDG_SESSION_TYPE", "wayland", 1) != 0) {
-        perror("Failed to set XDG_SESSION_TYPE");
-    }
+    // Launch Hyprland
+    execlp("Hyprland", "Hyprland", NULL);
 
-    if (setenv("XDG_SESSION_CLASS", "user", 1) != 0) {
-        perror("Failed to set XDG_SESSION_CLASS");
-    }
-
-    // Start a seatd session (not strictly required but whatever)
-    if (system("seatd-launch") != 0) {
-        printf("Warning: seatd-launch failed. Ensure seatd is running!\n");
-    }
+    perror("Failed to start Hyprland");
+    exit(EXIT_FAILURE);
 }
 

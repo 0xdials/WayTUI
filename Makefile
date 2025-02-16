@@ -1,15 +1,12 @@
 CC = gcc
-CFLAGS = -Wall -Wextra
-LIBS = -lpam -lpam_misc -lncurses
+CFLAGS = -Wall -lncurses -lpam
+SOURCES = main.c seatd.c tui.c
+OBJECTS = $(SOURCES:.c=.o)
+EXEC = waytui
 
-SRC = main.c seatd.c tui.c
-OBJ = $(SRC:.c=.o)
+$(EXEC): $(OBJECTS)
+	$(CC) $(OBJECTS) -o $(EXEC)
 
-all: waytui
-
-waytui: $(OBJ)
-	$(CC) $(CFLAGS) -o waytui $(OBJ) $(LIBS)
-
-clean:
-	rm -f waytui $(OBJ)
+.c.o:
+	$(CC) $(CFLAGS) -c $< -o $@
 
