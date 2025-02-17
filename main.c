@@ -6,7 +6,7 @@
 #include <security/pam_appl.h>
 #include <ncurses.h>
 
-// PAM conversation function to handle password input
+// PAM conversation function (unchanged from earlier)
 static int pam_conv(int num_msg, const struct pam_message **msg, 
                     struct pam_response **resp, void *appdata_ptr) {
     char *password = (char *)appdata_ptr;
@@ -22,52 +22,48 @@ static int pam_conv(int num_msg, const struct pam_message **msg,
     return PAM_SUCCESS;
 }
 
-// Authenticate user via PAM
+// Authenticate user via PAM (unchanged)
 int authenticate(const char *username, const char *password) {
     pam_handle_t *pam_handle = NULL;
     struct pam_conv pam_conversation = { .conv = pam_conv, .appdata_ptr = (void *)password };
 
-    int ret = pam_start("my-dm", username, &pam_conversation, &pam_handle);
+    int ret = pam_start("waytui", username, &pam_conversation, &pam_handle); // <-- Updated service name
     if (ret != PAM_SUCCESS) return 0;
 
-    ret = pam_authenticate(pam_handle, 0);  // Authenticate
-    if (ret == PAM_SUCCESS) ret = pam_acct_mgmt(pam_handle, 0);  // Check account validity
+    ret = pam_authenticate(pam_handle, 0);
+    if (ret == PAM_SUCCESS) ret = pam_acct_mgmt(pam_handle, 0);
 
     pam_end(pam_handle, ret);
     return ret == PAM_SUCCESS;
 }
 
-// Launch Hyprland with proper environment
+// Launch Hyprland (unchanged)
 void launch_hyprland(const char *username) {
     pid_t pid = fork();
     if (pid == 0) {
-        // Set Wayland-specific environment variables
         setenv("XDG_SESSION_TYPE", "wayland", 1);
         setenv("XDG_CURRENT_DESKTOP", "Hyprland", 1);
-        setenv("HOME", getenv("HOME"), 1);  // Preserve home directory
+        setenv("HOME", getenv("HOME"), 1);
 
-        // Launch Hyprland (replace with your Hyprland command if needed)
         execlp("Hyprland", "Hyprland", NULL);
         perror("Failed to launch Hyprland");
         _exit(EXIT_FAILURE);
     } else {
-        waitpid(pid, NULL, 0);  // Wait for Hyprland to exit
+        waitpid(pid, NULL, 0);
     }
 }
 
-// TUI for username/password input
+// TUI (updated welcome message)
 int main() {
-    // Initialize ncurses
     initscr();
     cbreak();
     noecho();
     keypad(stdscr, TRUE);
 
-    // Get username/password
     char username[32];
     char password[32];
 
-    printw("My Hyprland DM\n\n");
+    printw("WayTUI - Hyprland Login\n\n"); // <-- Updated title
     printw("Username: ");
     refresh();
     getnstr(username, sizeof(username) - 1);
@@ -78,11 +74,10 @@ int main() {
     getnstr(password, sizeof(password) - 1);
     echo();
 
-    endwin();  // End ncurses
+    endwin();
 
-    // Authenticate and launch
     if (authenticate(username, password)) {
-        printf("Authentication successful! Launching Hyprland...\n");
+        printf("Authenticated. Launching Hyprland...\n");
         launch_hyprland(username);
     } else {
         printf("Authentication failed.\n");
