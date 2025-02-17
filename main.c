@@ -6,7 +6,7 @@
 #include <security/pam_appl.h>
 #include <ncurses.h>
 
-// PAM conversation function (unchanged from earlier)
+// PAM conversation function
 static int pam_conv(int num_msg, const struct pam_message **msg, 
                     struct pam_response **resp, void *appdata_ptr) {
     char *password = (char *)appdata_ptr;
@@ -22,7 +22,7 @@ static int pam_conv(int num_msg, const struct pam_message **msg,
     return PAM_SUCCESS;
 }
 
-// Authenticate user via PAM (unchanged)
+// Authenticate user via PAM 
 int authenticate(const char *username, const char *password) {
     pam_handle_t *pam_handle = NULL;
     struct pam_conv pam_conversation = { .conv = pam_conv, .appdata_ptr = (void *)password };
@@ -37,7 +37,7 @@ int authenticate(const char *username, const char *password) {
     return ret == PAM_SUCCESS;
 }
 
-// Launch Hyprland (unchanged)
+// Launch Hyprland 
 void launch_hyprland(const char *username) {
     pid_t pid = fork();
     if (pid == 0) {
@@ -53,7 +53,7 @@ void launch_hyprland(const char *username) {
     }
 }
 
-// TUI (updated welcome message)
+// TUI 
 int main() {
     initscr();
     cbreak();
@@ -63,7 +63,7 @@ int main() {
     char username[32];
     char password[32];
 
-    printw("WayTUI - Hyprland Login\n\n"); // <-- Updated title
+    printw("WayTUI - Hyprland Login\n\n"); 
     printw("Username: ");
     refresh();
     getnstr(username, sizeof(username) - 1);
